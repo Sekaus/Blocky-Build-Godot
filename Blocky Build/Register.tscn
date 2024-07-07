@@ -1,0 +1,9 @@
+[gd_scene load_steps=4 format=3 uid="uid://d3ts66q75vgki"]
+
+[ext_resource type="Script" path="res://Scripts/Register.cs" id="1_ia52c"]
+[ext_resource type="PackedScene" uid="uid://bd0mi3l8xhcjc" path="res://Assets/Blocks/GrassBlock.tscn" id="2_xdekd"]
+[ext_resource type="PackedScene" uid="uid://dn0fw6oaxxyou" path="res://Assets/Blocks/Stone.tscn" id="3_v4kdt"]
+
+[node name="Register" type="Node"]
+script = ExtResource("1_ia52c")
+block = Array[PackedScene]([ExtResource("3_v4kdt"), ExtResource("2_xdekd")])
