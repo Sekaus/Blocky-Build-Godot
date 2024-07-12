@@ -2,17 +2,20 @@ using Godot;
 using System;
 
 public partial class PlayerController : RigidBody3D {
-	WorldData worldData;
 	[Export]
 	public float walkSpeed = 100f;
 	[Export]
 	public float jumpPower = 300f;
 	[Export]
 	public float mouseSensitivity = 2f;
-	Game game;
+	public Inventory hotbar = new Inventory(9);
+
 	Camera3D playerCamera;
 	RayCast3D groundRayCast;
 	RayCast3D playerRayCast;
+
+	Game game;
+	WorldData worldData;
 	public override void _Ready() {
 		game = GetParent().GetParent<Game>();
 		worldData = GetParent<WorldData>();
@@ -78,15 +81,14 @@ public partial class PlayerController : RigidBody3D {
 				foreach (string groupe in node.GetGroups()) {
 					switch (groupe) {
 						case "block":
+							Block block = (Block)node;
 							if (Input.IsActionJustPressed("hit_and_remove")) {
-								node.QueueFree();
+								if(block.BlockName != "Bedrock")
+									game.RemoveBlock((int)((Block)node).Position.X, (int)((Block)node).Position.Y, (int)((Block)node).Position.Z);
 							}
 							else if(Input.IsActionJustPressed("integrate_and_place")) {
-								Vector3 collisionPoint = playerRayCast.GetCollisionPoint();
-								Vector3 distanceToCollisionPoint = playerCamera.GlobalPosition - collisionPoint;
-								StaticBody3D block = (StaticBody3D)node;
-								Vector3 newBlockPose = distanceToCollisionPoint.Round().Normalized() + block.Position;
-								game.setBlock(0, Mathf.RoundToInt(newBlockPose.X), Mathf.RoundToInt(newBlockPose.Y), Mathf.RoundToInt(newBlockPose.Z));
+								Vector3 newBlockPose = block.Position + playerRayCast.GetCollisionNormal();
+								game.SetBlock("StoneFence", Mathf.RoundToInt(newBlockPose.X), Mathf.RoundToInt(newBlockPose.Y), Mathf.RoundToInt(newBlockPose.Z));
                             }
 							break;
 					}

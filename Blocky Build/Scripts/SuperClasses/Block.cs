@@ -3,22 +3,26 @@ using System;
 
 public partial class Block : StaticBody3D {
     [Export]
-    public Texture particle;
+    public Texture Particle;
     [Export]
-    public AudioEffect[] breakAudioEffects;
+    public AudioEffect[] BreakAudioEffects;
     [Export]
-    public AudioEffect[] placeAndStapAudioEffects;
-    public int id;
+    public AudioEffect[] PlaceAndStapAudioEffects;
+    [Export]
+    public BlockType Type = BlockType.Normal;
 
-    // when a player steps on this block
-    void onPlayerStepOn() {}
-
-    // when a player steps off this block
-    void onPlayerStepOff() {}
-
-    // when a player place this block
-    void onPlayerPlace() {}
-
-    // when a player remove this block
-    void onPlayerDestroy() {}
+    public FacingDirections FacingDirection = FacingDirections.Forward;
+    public string BlockName = "";
+    public bool Rotated = false;
+    
+    public enum BlockType {
+        Normal,
+        Fence
+    }
+    public enum FacingDirections { 
+        Forward, 
+        Backward,
+        Right,
+        Left
+    }
 }
