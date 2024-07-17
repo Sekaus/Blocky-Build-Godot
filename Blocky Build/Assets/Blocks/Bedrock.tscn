@@ -12,10 +12,10 @@ albedo_texture = ExtResource("3_t8ovi")
 [node name="Bedrock" type="StaticBody3D" groups=["block"]]
 script = ExtResource("1_vl7sy")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+[node name="CollisionShape" type="CollisionShape3D" parent="."]
 shape = SubResource("BoxShape3D_bensk")
 
-[node name="CSGMesh3D" type="CSGMesh3D" parent="."]
+[node name="Mesh" type="CSGMesh3D" parent="."]
 transform = Transform3D(0.5, 0, 0, 0, 0.5, 0, 0, 0, 0.5, 0, 0, 0)
 mesh = ExtResource("2_1l0p0")
 material = SubResource("StandardMaterial3D_q27ap")

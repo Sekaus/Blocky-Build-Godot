@@ -11,11 +11,12 @@ albedo_texture = ExtResource("3_7a6q6")
 
 [node name="GrassBlock" type="StaticBody3D" groups=["block"]]
 script = ExtResource("1_iyfe4")
+Tags = PackedStringArray("dirt", "grassBlock")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+[node name="CollisionShape" type="CollisionShape3D" parent="."]
 shape = SubResource("BoxShape3D_hmdco")
 
-[node name="CSGMesh3D" type="CSGMesh3D" parent="."]
+[node name="Mesh" type="CSGMesh3D" parent="."]
 transform = Transform3D(0.5, 0, 0, 0, 0.5, 0, 0, 0, 0.5, 0, 0, 0)
 mesh = ExtResource("2_qx6aw")
 material = SubResource("StandardMaterial3D_0tvnf")

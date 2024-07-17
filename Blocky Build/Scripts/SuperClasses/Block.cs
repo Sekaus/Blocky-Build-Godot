@@ -10,10 +10,24 @@ public partial class Block : StaticBody3D {
     public AudioEffect[] PlaceAndStapAudioEffects;
     [Export]
     public BlockType Type = BlockType.Normal;
+    [Export]
+    public string VariationOfBlock = "";
+    [Export]
+    public string[] Tags;
 
     public FacingDirections FacingDirection = FacingDirections.Forward;
-    public string BlockName = "";
-    public bool Rotated = false;
+    private string blockName = "";
+    public string BlockName { 
+        get {
+            if (blockName != "")
+                return blockName;
+            else
+                return Name;
+        } 
+        set { 
+            blockName = value; 
+        } 
+    }
     
     public enum BlockType {
         Normal,

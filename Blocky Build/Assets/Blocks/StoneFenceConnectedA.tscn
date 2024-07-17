@@ -8,7 +8,7 @@
 size = Vector3(1.00012, 2, 1)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_lvjre"]
-size = Vector3(0.499481, 0.749023, 0.247559)
+size = Vector3(0.251572, 0.749023, 0.247559)
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_2ee41"]
 albedo_texture = ExtResource("3_q4lsm")
@@ -16,16 +16,17 @@ albedo_texture = ExtResource("3_q4lsm")
 [node name="StoneFenceConnectedA" type="StaticBody3D" groups=["block"]]
 script = ExtResource("1_fd58c")
 Type = 1
+VariationOfBlock = "StoneFence"
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+[node name="CollisionShape1" type="CollisionShape3D" parent="."]
 transform = Transform3D(0.5, 0, 0, 0, 0.5, 0, 0, 0, 0.5, 3.05176e-05, 0, 0)
 shape = SubResource("BoxShape3D_r850t")
 
-[node name="CollisionShape3D2" type="CollisionShape3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.499619, -0.125488, -0.000976563)
+[node name="CollisionShape2" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.375664, -0.125488, -0.000976563)
 shape = SubResource("BoxShape3D_lvjre")
 
-[node name="CSGMesh3D" type="CSGMesh3D" parent="."]
+[node name="Mesh" type="CSGMesh3D" parent="."]
 transform = Transform3D(0.5, 0, 0, 0, 0.5, 0, 0, 0, 0.5, 0, 0, 0)
 mesh = ExtResource("2_r4gio")
 material = SubResource("StandardMaterial3D_2ee41")

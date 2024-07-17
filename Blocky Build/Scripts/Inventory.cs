@@ -2,10 +2,13 @@ using Godot;
 using System;
 
 public partial class Inventory : Node {
-    public int SlotCount;
     public Item[] Slots;
-    public Inventory(int slotCount) {
-        this.SlotCount = slotCount;
-        this.Slots = new Item[slotCount];
+
+    public int Width, Height;
+
+    public Inventory(int Width, int Height = 1) {
+        this.Slots = new Item[Width * Height];
+        this.Width = Width;
+        this.Height = Height;
     }
 }

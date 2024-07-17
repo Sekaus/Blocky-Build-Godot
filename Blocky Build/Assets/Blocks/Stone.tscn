@@ -11,11 +11,12 @@ albedo_texture = ExtResource("3_fxn3t")
 
 [node name="Stone" type="StaticBody3D" groups=["block"]]
 script = ExtResource("1_fca55")
+Tags = PackedStringArray("stone")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+[node name="CollisionShape" type="CollisionShape3D" parent="."]
 shape = SubResource("BoxShape3D_bensk")
 
-[node name="CSGMesh3D" type="CSGMesh3D" parent="."]
+[node name="Mesh" type="CSGMesh3D" parent="."]
 transform = Transform3D(0.5, 0, 0, 0, 0.5, 0, 0, 0, 0.5, 0, 0, 0)
 mesh = ExtResource("2_3dxl5")
 material = SubResource("StandardMaterial3D_s40qv")

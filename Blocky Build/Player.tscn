@@ -1,6 +1,7 @@
-[gd_scene load_steps=3 format=3 uid="uid://b56rds5e6x5ms"]
+[gd_scene load_steps=4 format=3 uid="uid://b56rds5e6x5ms"]
 
 [ext_resource type="Script" path="res://Scripts/PlayerController.cs" id="1_wiedh"]
+[ext_resource type="PackedScene" uid="uid://c5sivuxjjyplp" path="res://Assets/GUI/InventoryGUI.tscn" id="2_seu08"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_igyyr"]
 size = Vector3(0.75, 2, 0.75)
@@ -23,3 +24,23 @@ current = true
 unique_name_in_owner = true
 transform = Transform3D(1, 0, 0, 0, -4.37114e-08, -1, 0, 1, -4.37114e-08, 0, 0, 0)
 target_position = Vector3(0, -4, 0)
+collide_with_areas = true
+
+[node name="GUI" type="HFlowContainer" parent="."]
+unique_name_in_owner = true
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 0
+alignment = 1
+metadata/_edit_use_anchors_ = true
+
+[node name="DataDisplayGUI" type="VFlowContainer" parent="GUI"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="InventoryGUI" parent="GUI/DataDisplayGUI" instance=ExtResource("2_seu08")]
+unique_name_in_owner = true
+layout_mode = 2

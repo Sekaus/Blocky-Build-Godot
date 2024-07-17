@@ -3,12 +3,13 @@ using System;
 
 public partial class PlayerController : RigidBody3D {
 	[Export]
-	public float walkSpeed = 100f;
+	public float WalkSpeed = 100f;
 	[Export]
-	public float jumpPower = 300f;
+	public float JumpPower = 300f;
 	[Export]
-	public float mouseSensitivity = 2f;
-	public Inventory hotbar = new Inventory(9);
+	public float MouseSensitivity = 2f;
+	public Inventory Hotbar = new Inventory(6, 1);
+	public Godot.Collections.Dictionary<int, Control> HotBarGUISlots = new Godot.Collections.Dictionary<int, Control>();
 
 	Camera3D playerCamera;
 	RayCast3D groundRayCast;
@@ -16,11 +17,124 @@ public partial class PlayerController : RigidBody3D {
 
 	Game game;
 	WorldData worldData;
+	Control inventoryGUI;
+
+	// Add item and item display to inventory
+	public void AddItemToHotbar(Item item, int count = 1, int toSlot = -1) {
+		// Find the nearest slot containing the specified item
+		if (toSlot == -1) {
+			for (int i = 0; i < Hotbar.Slots.Length; i++) {
+				if (Hotbar.Slots[i] != null && Hotbar.Slots[i].ItemName == item.ItemName) {
+					toSlot = i;
+					break;
+				}
+			}
+			// If nothing is found then choose nearest available slot
+			if (toSlot == -1) {
+				for (int i = 0; i < Hotbar.Slots.Length; i++) {
+					if (Hotbar.Slots[i] == null) {
+						toSlot = i;
+						break;
+					}
+				}
+			}
+		}
+
+		// If the item is found in the hotbar
+		if (toSlot != -1) {
+			Node selectedHotBarGUISlotItem = HotBarGUISlots[toSlot].GetNode("%Item");
+
+			if (Hotbar.Slots[toSlot] != item) {
+				// If there's an existing item in the slot, remove its GUI node
+				if (Hotbar.Slots[toSlot] != null) {
+					if (selectedHotBarGUISlotItem.GetChildCount() > 0) {
+						Node oldItemNode = selectedHotBarGUISlotItem.GetChild(0);
+						selectedHotBarGUISlotItem.RemoveChild(oldItemNode);
+						oldItemNode.QueueFree();
+					}
+				}
+
+				// Assign the new item to the slot and set its count
+				Hotbar.Slots[toSlot] = item;
+				Hotbar.Slots[toSlot].Count = count;
+
+				// Add the new item's GUI node
+				HotBarGUISlots[toSlot].GetNode("%Item").AddChild(item);
+			}
+			// Adjust the count
+			else if (count > 1) {
+				Hotbar.Slots[toSlot].Count += count;
+			}
+
+			// Update the item count label
+			HotBarGUISlots[toSlot].GetNode<Label>("%ItemCount").Text = (Hotbar.Slots[toSlot].Count <= 0 ? "" : Hotbar.Slots[toSlot].Count.ToString());
+		}
+	}
+
+
+	// Remove item and item display from hotbar
+	public void RemoveItemFromHotbar(Item item, int count = 0, int toSlot = -1) {
+		// Find the nearest slot containing the specified item
+		if (toSlot == -1) {
+			for (int i = 0; i < Hotbar.Slots.Length; i++) {
+				if (Hotbar.Slots[i] != null && Hotbar.Slots[i].ItemName == item.ItemName) {
+					toSlot = i;
+					break;
+				}
+			}
+		}
+
+		// If the item is found in the hotbar
+		if (toSlot != -1) {
+			Node selectedHotBarGUISlotItem = HotBarGUISlots[toSlot].GetNode("%Item");
+
+			// Adjust the count
+			if (count > 0)
+				Hotbar.Slots[toSlot].Count -= count;
+
+			// If the count is zero or less, remove the item from the slot
+			if (item.Count <= 0 || count <= 0) {
+				if (selectedHotBarGUISlotItem.GetChildCount() > 0) {
+					Node oldItemNode = selectedHotBarGUISlotItem.GetChild(0);
+					selectedHotBarGUISlotItem.RemoveChild(oldItemNode);
+					oldItemNode.QueueFree();
+				}
+
+				// Clear the slot in the Hotbar
+				Hotbar.Slots[toSlot] = null;
+			}
+
+			// Update the item count label
+			HotBarGUISlots[toSlot].GetNode<Label>("%ItemCount").Text = (Hotbar.Slots[toSlot]?.Count > 0 ? Hotbar.Slots[toSlot].Count.ToString() : "");
+		}
+	}
+
+
+
 	public override void _Ready() {
-		game = GetParent().GetParent<Game>();
-		worldData = GetParent<WorldData>();
+		game = GetParent<Game>();
+		worldData = game.worldData; // this will be used later...
 		playerCamera = GetNode<Camera3D>("%PlayerCamera");
 		playerRayCast = GetNode<RayCast3D>("%PlayerRayCast");
+		inventoryGUI = GetNode<Control>("%InventoryGUI");
+
+		// Setup inventory GUI
+
+		for (int i = 0; i < Hotbar.Slots.Length; i++) {
+			Control newItemSlot = Register.GUIElements["ItemSlotGUI"].Instantiate<Control>();
+			HotBarGUISlots.Add(i, newItemSlot);
+
+			if (i < Hotbar.Height)
+                inventoryGUI.GetNode("ItemContainerGUIH").GetNode("ItemContainerGUIV").AddChild(newItemSlot);
+			else
+				inventoryGUI.GetNode("ItemContainerGUIH").AddChild(newItemSlot);
+		}
+
+		AddItemToHotbar(Register.Items["Dirt"].Instantiate<Item>(), 100);
+		AddItemToHotbar(Register.Items["GrassBlock"].Instantiate<Item>(), 100);
+		AddItemToHotbar(Register.Items["OkePlanks"].Instantiate<Item>(), 100);
+		AddItemToHotbar(Register.Items["Stone"].Instantiate<Item>(), 100);
+		AddItemToHotbar(Register.Items["StoneFence"].Instantiate<Item>(), 100);
 	}
 
 	// move player
@@ -47,20 +161,19 @@ public partial class PlayerController : RigidBody3D {
 		}
 
 		if (Input.IsActionJustPressed("jump") && (LinearVelocity.Y < maxLinearVelocityYForJump && LinearVelocity.Y > -maxLinearVelocityYForJump)) {
-			velocity += Transform.Basis.Y * jumpPower * ((float)delta);
+			velocity += Transform.Basis.Y * JumpPower * ((float)delta);
 		}
 
-		//Vector3 normalizedVelocity = velocity.Normalized();
-		velocity = new Vector3(velocity.X * walkSpeed * ((float)delta), velocity.Y, velocity.Z * walkSpeed * ((float)delta));
+		velocity = new Vector3(velocity.X * WalkSpeed * ((float)delta), velocity.Y, velocity.Z * WalkSpeed * ((float)delta));
 
 		LinearVelocity = velocity;
 
 		// rotate player
-		playerRotateX *= ((float)delta) * mouseSensitivity;
+		playerRotateX *= ((float)delta) * MouseSensitivity;
 		playerCameraRotateionX = Mathf.Clamp(playerCameraRotateionX + playerRotateX, -maxPlayerCameraRotateionX, maxPlayerCameraRotateionX);
 		if (playerCameraRotateionX < maxPlayerCameraRotateionX && playerCameraRotateionX > -maxPlayerCameraRotateionX)
 			playerCamera.RotateX(playerRotateX);
-		RotateY(playerRotateY * ((float)delta) * mouseSensitivity);
+		RotateY(playerRotateY * ((float)delta) * MouseSensitivity);
 
 		playerRotateX = 0f;
 		playerRotateY = 0f;
@@ -77,7 +190,6 @@ public partial class PlayerController : RigidBody3D {
 		if(playerRayCast.CollideWithBodies) {
 			var collider = playerRayCast.GetCollider();
 			if (collider is Node node) {
-				//distanceToCollectedNode = GlobalTransform.Origin.DistanceSquaredTo(playerLookRayCast.GetCollisionPoint());
 				foreach (string groupe in node.GetGroups()) {
 					switch (groupe) {
 						case "block":
@@ -95,5 +207,29 @@ public partial class PlayerController : RigidBody3D {
 				}
 			}
 		}
+
+		// shortcouts
+
+		// hotbar
+		/*if (Input.IsActionJustPressed("hotbar_slot_1"))
+
+		else if (Input.IsActionJustPressed("hotbar_slot_2")
+
+		else if (Input.IsActionJustPressed("hotbar_slot_3")
+
+		else if (Input.IsActionJustPressed("hotbar_slot_4")
+
+		else if (Input.IsActionJustPressed("hotbar_slot_5")
+
+		else if (Input.IsActionJustPressed("hotbar_slot_6")
+
+		else if (Input.IsActionJustPressed("hotbar_slot_7")
+
+		else if (Input.IsActionJustPressed("hotbar_slot_8")
+
+		else if (Input.IsActionJustPressed("hotbar_slot_9")
+
+		else if (Input.IsActionJustPressed("hotbar_slot_0")*/
+
 	}
 }

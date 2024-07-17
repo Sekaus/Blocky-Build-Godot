@@ -2,13 +2,22 @@ using Godot;
 using System;
 
 public partial class Item : Node {
-    public Node Scene;
-    public int MaxCount;
-    public int Count;
+    [Export]
+    public int MaxCount = 100;
+    [Export]
+    public string[] Tags;
 
-    public Item(Node scene, int maxCount = 99, int count = 1) {
-        this.Scene = scene;
-        this.MaxCount = maxCount;
-        this.Count = count;
+    public int Count = 1;
+    private string itemName = "";
+    public string ItemName {
+        get {
+            if (itemName != "")
+                return itemName;
+            else
+                return Name;
+        }
+        set {
+            itemName = value;
+        }
     }
 }

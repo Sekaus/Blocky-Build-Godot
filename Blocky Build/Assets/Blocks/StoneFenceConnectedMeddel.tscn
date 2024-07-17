@@ -13,11 +13,12 @@ albedo_texture = ExtResource("3_btjyy")
 [node name="StoneFenceConnectedMeddel" type="StaticBody3D" groups=["block"]]
 script = ExtResource("1_4mdsk")
 Type = 1
+VariationOfBlock = "StoneFence"
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+[node name="CollisionShape" type="CollisionShape3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.00167847, -0.126221, -0.000610352)
 shape = SubResource("BoxShape3D_xyns4")
 
-[node name="CSGMesh3D" type="CSGMesh3D" parent="."]
+[node name="Mesh" type="CSGMesh3D" parent="."]
 mesh = ExtResource("2_n8133")
 material = SubResource("StandardMaterial3D_qsm23")
