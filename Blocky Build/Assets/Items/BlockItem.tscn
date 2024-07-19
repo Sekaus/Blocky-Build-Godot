@@ -2,5 +2,5 @@
 
 [ext_resource type="Script" path="res://Scripts/SuperClasses/Item.cs" id="1_vvon7"]
 
-[node name="BlockItem" type="Node"]
+[node name="BlockItem" type="Node3D"]
 script = ExtResource("1_vvon7")

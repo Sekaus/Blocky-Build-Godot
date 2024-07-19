@@ -1,7 +1,7 @@
 using Godot;
 using System;
 
-public partial class Item : Node {
+public partial class Item : Node3D {
     [Export]
     public int MaxCount = 100;
     [Export]

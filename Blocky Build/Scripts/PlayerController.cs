@@ -8,12 +8,13 @@ public partial class PlayerController : RigidBody3D {
 	public float JumpPower = 300f;
 	[Export]
 	public float MouseSensitivity = 2f;
-	public Inventory Hotbar = new Inventory(6, 1);
+	public Inventory Hotbar = new Inventory(7, 1);
 	public Godot.Collections.Dictionary<int, Control> HotBarGUISlots = new Godot.Collections.Dictionary<int, Control>();
-
+	
+	Node3D leftHand;
 	Camera3D playerCamera;
-	RayCast3D groundRayCast;
 	RayCast3D playerRayCast;
+	Area3D groundArea;
 
 	Game game;
 	WorldData worldData;
@@ -44,7 +45,7 @@ public partial class PlayerController : RigidBody3D {
 		if (toSlot != -1) {
 			Node selectedHotBarGUISlotItem = HotBarGUISlots[toSlot].GetNode("%Item");
 
-			if (Hotbar.Slots[toSlot] != item) {
+			if (Hotbar.Slots[toSlot]?.ItemName != item.ItemName) {
 				// If there's an existing item in the slot, remove its GUI node
 				if (Hotbar.Slots[toSlot] != null) {
 					if (selectedHotBarGUISlotItem.GetChildCount() > 0) {
@@ -109,14 +110,67 @@ public partial class PlayerController : RigidBody3D {
 		}
 	}
 
+	// Add item in left hand
+	private void AddItemInLeftHand(Item item) {
+		// Remove existing item in left hand if necessary
+		if (leftHand.GetChildCount() > 0) {
+			Item existingItem = leftHand.GetChild<Item>(0);
+			if (existingItem != null) {
+				leftHand.RemoveChild(existingItem);
+				existingItem.QueueFree();
+			}
+		}
 
+		// Add the new item to the left hand
+		if (item != null) {
+			leftHand.AddChild(item);
+			item.Owner = leftHand; // Ensure proper ownership
+
+			// Center the item to its parent
+			if (item is Node3D item3D) {
+				item3D.GlobalTransform = leftHand.GlobalTransform;
+				item3D.Position = Vector3.Zero;
+			}
+		}
+	}
+
+	// Remove item in left hand
+	private void RemoveItemInLeftHand() {
+		if (leftHand.GetChildCount() > 0) {
+			Node oldItemNode = leftHand.GetChild<Item>(0);
+			leftHand.RemoveChild(oldItemNode);
+			oldItemNode.QueueFree();
+		}
+	}
+
+	// Equip item from the hotbar
+	private void EquipItemFromHotbar(int slotIndex) {
+		if (Hotbar.Slots.Length > slotIndex && Hotbar.Slots[slotIndex] != null) {
+			Item newItem = Register.Blocks[Hotbar.Slots[slotIndex].ItemName]?.Instantiate<Item>();
+			AddItemInLeftHand(newItem);
+		}
+		else
+			RemoveItemInLeftHand();
+	}
+
+	public string GetItemInLeftHand() {
+		if(leftHand.GetChildOrNull<Item>(0) != null)
+			return leftHand.GetChild<Item>(0).ItemName;
+		return "";
+    }
 
 	public override void _Ready() {
 		game = GetParent<Game>();
 		worldData = game.worldData; // this will be used later...
+		leftHand = GetNode<Node3D>("%LeftHand");
 		playerCamera = GetNode<Camera3D>("%PlayerCamera");
 		playerRayCast = GetNode<RayCast3D>("%PlayerRayCast");
 		inventoryGUI = GetNode<Control>("%InventoryGUI");
+		groundArea = GetNode<Area3D>("%GroundArea");
+
+		// Connect to signels
+
+		groundArea.Connect("body_entered", new Callable(this, nameof(OnBodyEntered)));
 
 		// Setup inventory GUI
 
@@ -130,14 +184,24 @@ public partial class PlayerController : RigidBody3D {
 				inventoryGUI.GetNode("ItemContainerGUIH").AddChild(newItemSlot);
 		}
 
-		AddItemToHotbar(Register.Items["Dirt"].Instantiate<Item>(), 100);
-		AddItemToHotbar(Register.Items["GrassBlock"].Instantiate<Item>(), 100);
-		AddItemToHotbar(Register.Items["OkePlanks"].Instantiate<Item>(), 100);
-		AddItemToHotbar(Register.Items["Stone"].Instantiate<Item>(), 100);
-		AddItemToHotbar(Register.Items["StoneFence"].Instantiate<Item>(), 100);
+		AddItemToHotbar(Register.Blocks["Dirt"].Instantiate<Item>(), 100);
+		AddItemToHotbar(Register.Blocks["Grass"].Instantiate<Item>(), 100);
+		AddItemToHotbar(Register.Blocks["GrassBlock"].Instantiate<Item>(), 100);
+		AddItemToHotbar(Register.Blocks["OkePlanks"].Instantiate<Item>(), 100);
+		AddItemToHotbar(Register.Blocks["Stone"].Instantiate<Item>(), 100);
+		AddItemToHotbar(Register.Blocks["StoneFence"].Instantiate<Item>(), 100);
+	}
+
+	// Method to handle the collision event of HitBox
+	private void OnBodyEntered(Node body) {
+		if (body is CollisionObject3D) {
+			// Check if the body is a ground-like object by collision layer/mask or other criteria
+			onGroundDetect = true;
+		}
 	}
 
 	// move player
+	bool onGroundDetect = false;
 	Vector3 velocity;
 	float maxLinearVelocityYForJump = 0.1f;
 	float playerRotateX;
@@ -160,8 +224,9 @@ public partial class PlayerController : RigidBody3D {
 			velocity += Transform.Basis.X;
 		}
 
-		if (Input.IsActionJustPressed("jump") && (LinearVelocity.Y < maxLinearVelocityYForJump && LinearVelocity.Y > -maxLinearVelocityYForJump)) {
+		if (Input.IsActionJustPressed("jump") && onGroundDetect) {
 			velocity += Transform.Basis.Y * JumpPower * ((float)delta);
+			onGroundDetect = false;
 		}
 
 		velocity = new Vector3(velocity.X * WalkSpeed * ((float)delta), velocity.Y, velocity.Z * WalkSpeed * ((float)delta));
@@ -179,15 +244,15 @@ public partial class PlayerController : RigidBody3D {
 		playerRotateY = 0f;
 	}
 
-    public override void _Input(InputEvent @event) {
-		if(@event is InputEventMouseMotion mouseMotion) {
+	public override void _Input(InputEvent @event) {
+		if (@event is InputEventMouseMotion mouseMotion) {
 			// rotate player and player camera
 			playerRotateX = Mathf.DegToRad(-mouseMotion.Relative.Y);
 			playerRotateY = Mathf.DegToRad(-mouseMotion.Relative.X);
 		}
 
 		// rayCast Hit
-		if(playerRayCast.CollideWithBodies) {
+		if (playerRayCast.CollideWithBodies) {
 			var collider = playerRayCast.GetCollider();
 			if (collider is Node node) {
 				foreach (string groupe in node.GetGroups()) {
@@ -195,13 +260,20 @@ public partial class PlayerController : RigidBody3D {
 						case "block":
 							Block block = (Block)node;
 							if (Input.IsActionJustPressed("hit_and_remove")) {
-								if(block.BlockName != "Bedrock")
-									game.RemoveBlock((int)((Block)node).Position.X, (int)((Block)node).Position.Y, (int)((Block)node).Position.Z);
+								if (block.BlockName != "Bedrock")
+									game.RemoveBlock(Mathf.RoundToInt(((Block)node).Position.X), Mathf.RoundToInt(((Block)node).Position.Y), Mathf.RoundToInt(((Block)node).Position.Z));
 							}
-							else if(Input.IsActionJustPressed("integrate_and_place")) {
+							else if (Input.IsActionJustPressed("integrate_and_place")) {
 								Vector3 newBlockPose = block.Position + playerRayCast.GetCollisionNormal();
-								game.SetBlock("StoneFence", Mathf.RoundToInt(newBlockPose.X), Mathf.RoundToInt(newBlockPose.Y), Mathf.RoundToInt(newBlockPose.Z));
-                            }
+								if (block.BlockName != "Grass")
+									game.SetBlock(GetItemInLeftHand(), Mathf.RoundToInt(newBlockPose.X), Mathf.RoundToInt(newBlockPose.Y), Mathf.RoundToInt(newBlockPose.Z));
+								else {
+									if (GetItemInLeftHand() != "") {
+										game.RemoveBlock(Mathf.RoundToInt(newBlockPose.X), Mathf.RoundToInt(newBlockPose.Y - 1), Mathf.RoundToInt(newBlockPose.Z));
+										game.SetBlock(GetItemInLeftHand(), Mathf.RoundToInt(newBlockPose.X), Mathf.RoundToInt(newBlockPose.Y - 1), Mathf.RoundToInt(newBlockPose.Z));
+									}
+								}
+							}
 							break;
 					}
 				}
@@ -210,26 +282,32 @@ public partial class PlayerController : RigidBody3D {
 
 		// shortcouts
 
-		// hotbar
-		/*if (Input.IsActionJustPressed("hotbar_slot_1"))
-
-		else if (Input.IsActionJustPressed("hotbar_slot_2")
-
-		else if (Input.IsActionJustPressed("hotbar_slot_3")
-
-		else if (Input.IsActionJustPressed("hotbar_slot_4")
-
-		else if (Input.IsActionJustPressed("hotbar_slot_5")
-
-		else if (Input.IsActionJustPressed("hotbar_slot_6")
-
-		else if (Input.IsActionJustPressed("hotbar_slot_7")
-
-		else if (Input.IsActionJustPressed("hotbar_slot_8")
-
+		// Hotbar shortcuts
+		if (Input.IsActionJustPressed("hotbar_slot_0"))
+			EquipItemFromHotbar(0);
+		else if (Input.IsActionJustPressed("hotbar_slot_1"))
+			EquipItemFromHotbar(1);
+		else if (Input.IsActionJustPressed("hotbar_slot_2"))
+			EquipItemFromHotbar(2);
+		else if (Input.IsActionJustPressed("hotbar_slot_3"))
+			EquipItemFromHotbar(3);
+		else if (Input.IsActionJustPressed("hotbar_slot_4"))
+			EquipItemFromHotbar(4);
+		else if (Input.IsActionJustPressed("hotbar_slot_5"))
+			EquipItemFromHotbar(5);
+		else if (Input.IsActionJustPressed("hotbar_slot_6"))
+			EquipItemFromHotbar(6);
+		/*else if (Input.IsActionJustPressed("hotbar_slot_7")) {
+			EquipItemFromHotbar(7);
+		}
+		else if (Input.IsActionJustPressed("hotbar_slot_8")) {
+			EquipItemFromHotbar(8);
+		}
 		else if (Input.IsActionJustPressed("hotbar_slot_9")
+			EquipItemFromHotbar(9);
 
-		else if (Input.IsActionJustPressed("hotbar_slot_0")*/
+		else if (Input.IsActionJustPressed("hotbar_slot_0")
+			EquipItemFromHotbar(10);*/
 
 	}
 }

@@ -9,35 +9,26 @@ public partial class Game : Node {
     // Set block in world at xyz
     public void SetBlock(string blockName, int x, int y, int z, bool runBlockUpdates = true) {
         if (!IsThereABlockAt(x, y, z)) {
-            Block newBlock = Register.Blocks[blockName].Instantiate<Block>();
+            Block newBlock = Register.Blocks[blockName]?.Instantiate<Block>();
+            if (newBlock != null) {
+                newBlock.BlockName = blockName;
 
-            newBlock.BlockName = blockName;
+                if (runBlockUpdates)
+                    newBlock = UpdateBlock(x, y, z, newBlock);
 
-            if (runBlockUpdates)
-                newBlock = UpdateBlock(x, y, z, newBlock);
+                newBlock.Position = new Vector3I(x, y, z);
 
-            newBlock.Position = new Vector3I(x, y, z);
+                newBlock.Name = "block_" + x + "_" + y + "_" + z;
 
-            newBlock.Name = "block_" + x + "_" + y + "_" + z;
-
-            map.AddChild(newBlock);
+                map.AddChild(newBlock);
 
 
-            if (runBlockUpdates) {
-                if (newBlock.Type == Block.BlockType.Fence) {
+                if (runBlockUpdates) {
                     Godot.Collections.Dictionary<string, Block> blocksToUpdate = CollectConnnectedBlocks(x, y, z);
 
                     UpdateBlocks(blocksToUpdate);
                 }
             }
-        }
-    }
-
-    // Replace block in world at xyz
-    public void ReplaceBlock(int x, int y, int z, string blockName, bool runBlockUpdates = true) {
-        if (IsThereABlockAt(x, y, z)) {
-            RemoveBlock(x, y, z);
-            SetBlock(blockName, x, y, z, runBlockUpdates);
         }
     }
 
@@ -58,8 +49,7 @@ public partial class Game : Node {
 
     // Run at block single update
     public Block UpdateBlock(int atX, int atY, int atZ, Block blockThatExecute) {
-        if (blockThatExecute.Type == Block.BlockType.Fence)
-            blockThatExecute = UpdateConnectedBlock(atX, atY, atZ, blockThatExecute);
+        blockThatExecute = UpdateConnectedBlock(atX, atY, atZ, blockThatExecute);
 
         return blockThatExecute;
     }
@@ -107,93 +97,95 @@ public partial class Game : Node {
 
     // Run at single connected block update
     public Block UpdateConnectedBlock(int atX, int atY, int atZ, Block blockThatExecute) {
-        Godot.Collections.Dictionary<string, Block> blocksToUpdate = CollectConnnectedBlocks(atX, atY, atZ);
+        if (blockThatExecute.Type == Block.BlockType.Fence) {
+            Godot.Collections.Dictionary<string, Block> blocksToUpdate = CollectConnnectedBlocks(atX, atY, atZ);
 
-        bool connectionToBlockRight = false;
-        bool connectionToBlockLeft = false;
-        bool connectionToBlockForward = false;
-        bool connectionToBlockBackward = false;
+            bool connectionToBlockRight = false;
+            bool connectionToBlockLeft = false;
+            bool connectionToBlockForward = false;
+            bool connectionToBlockBackward = false;
 
-        if (blocksToUpdate["Right"].BlockName != "")
-            connectionToBlockRight = true;
-        if (blocksToUpdate["Left"].BlockName != "")
-            connectionToBlockLeft = true;
-        if (blocksToUpdate["Forward"].BlockName != "")
-            connectionToBlockForward = true;
-        if (blocksToUpdate["Backward"].BlockName != "")
-            connectionToBlockBackward = true;
+            if (blocksToUpdate["Right"].BlockName != "" && blocksToUpdate["Right"].canBeConnected)
+                connectionToBlockRight = true;
+            if (blocksToUpdate["Left"].BlockName != "" && blocksToUpdate["Left"].canBeConnected)
+                connectionToBlockLeft = true;
+            if (blocksToUpdate["Forward"].BlockName != "" && blocksToUpdate["Forward"].canBeConnected)
+                connectionToBlockForward = true;
+            if (blocksToUpdate["Backward"].BlockName != "" && blocksToUpdate["Backward"].canBeConnected)
+                connectionToBlockBackward = true;
 
-        string newBlock = blockThatExecute.BlockName;
+            string newBlock = blockThatExecute.BlockName;
 
-        if (connectionToBlockRight && connectionToBlockLeft && connectionToBlockForward && connectionToBlockBackward) {
-            blockThatExecute = Register.Blocks["StoneFence"]["ConnectedC"].Instantiate<Block>();
-        }
-        else if (connectionToBlockRight && connectionToBlockLeft && connectionToBlockForward) {
-            blockThatExecute = Register.Blocks["StoneFence"]["ConnectedB"].Instantiate<Block>();
-            blockThatExecute.Rotate(Vector3.Up, Mathf.DegToRad(-90));
-            blockThatExecute.FacingDirection = Block.FacingDirections.Forward;
-        }
-        else if (connectionToBlockRight && connectionToBlockLeft && connectionToBlockBackward) {
-            blockThatExecute = Register.Blocks["StoneFence"]["ConnectedB"].Instantiate<Block>();
-            blockThatExecute.Rotate(Vector3.Up, Mathf.DegToRad(90));
-            blockThatExecute.FacingDirection = Block.FacingDirections.Backward;
-        }
-        else if (connectionToBlockRight && connectionToBlockForward && connectionToBlockBackward) {
-            blockThatExecute = Register.Blocks["StoneFence"]["ConnectedB"].Instantiate<Block>();
-            blockThatExecute.FacingDirection = Block.FacingDirections.Right;
-        }
-        else if (connectionToBlockLeft && connectionToBlockForward && connectionToBlockBackward) {
-            blockThatExecute = Register.Blocks["StoneFence"]["ConnectedB"].Instantiate<Block>();
-            blockThatExecute.Rotate(Vector3.Up, Mathf.DegToRad(180));
-            blockThatExecute.FacingDirection = Block.FacingDirections.Left;
-        }
-        else if (connectionToBlockForward && connectionToBlockBackward) {
-            blockThatExecute = Register.Blocks["StoneFence"]["ConnectedMeddel"].Instantiate<Block>();
-            blockThatExecute.Rotate(Vector3.Up, Mathf.DegToRad(90));
-        }
-        else if (connectionToBlockRight && connectionToBlockLeft) {
-            blockThatExecute = Register.Blocks["StoneFence"]["ConnectedMeddel"].Instantiate<Block>();
-        }
-        else if (connectionToBlockLeft && connectionToBlockForward) {
-            blockThatExecute = Register.Blocks["StoneFence"]["ConnectedD"].Instantiate<Block>();
-            blockThatExecute.Rotate(Vector3.Up, Mathf.DegToRad(-90));
-            blockThatExecute.FacingDirection = Block.FacingDirections.Left;
-        }
-        else if (connectionToBlockRight && connectionToBlockForward) {
-            blockThatExecute = Register.Blocks["StoneFence"]["ConnectedD"].Instantiate<Block>();
-            blockThatExecute.FacingDirection = Block.FacingDirections.Forward;
-        }
-        else if (connectionToBlockLeft && connectionToBlockBackward) {
-            blockThatExecute = Register.Blocks["StoneFence"]["ConnectedD"].Instantiate<Block>();
-            blockThatExecute.Rotate(Vector3.Up, Mathf.DegToRad(180));
-            blockThatExecute.FacingDirection = Block.FacingDirections.Backward;
-        }
-        else if (connectionToBlockRight && connectionToBlockBackward) {
-            blockThatExecute = Register.Blocks["StoneFence"]["ConnectedD"].Instantiate<Block>();
-            blockThatExecute.Rotate(Vector3.Up, Mathf.DegToRad(90));
-            blockThatExecute.FacingDirection = Block.FacingDirections.Right;
-        }
-        else if (connectionToBlockForward) {
-            blockThatExecute = Register.Blocks["StoneFence"]["ConnectedA"].Instantiate<Block>();
-            blockThatExecute.Rotate(Vector3.Up, Mathf.DegToRad(-90));
-            blockThatExecute.FacingDirection = Block.FacingDirections.Forward;
-        }
-        else if (connectionToBlockBackward) {
-            blockThatExecute = Register.Blocks["StoneFence"]["ConnectedA"].Instantiate<Block>();
-            blockThatExecute.Rotate(Vector3.Up, Mathf.DegToRad(90));
-            blockThatExecute.FacingDirection = Block.FacingDirections.Backward;
-        }
-        else if (connectionToBlockRight) {
-            blockThatExecute = Register.Blocks["StoneFence"]["ConnectedA"].Instantiate<Block>();
-            blockThatExecute.FacingDirection = Block.FacingDirections.Right;
-        }
-        else if (connectionToBlockLeft) {
-            blockThatExecute = Register.Blocks["StoneFence"]["ConnectedA"].Instantiate<Block>();
-            blockThatExecute.Rotate(Vector3.Up, Mathf.DegToRad(180));
-            blockThatExecute.FacingDirection = Block.FacingDirections.Left;
-        }
+            if (connectionToBlockRight && connectionToBlockLeft && connectionToBlockForward && connectionToBlockBackward) {
+                blockThatExecute = Register.Blocks["StoneFence"]["ConnectedC"].Instantiate<Block>();
+            }
+            else if (connectionToBlockRight && connectionToBlockLeft && connectionToBlockForward) {
+                blockThatExecute = Register.Blocks["StoneFence"]["ConnectedB"].Instantiate<Block>();
+                blockThatExecute.Rotate(Vector3.Up, Mathf.DegToRad(-90));
+                blockThatExecute.FacingDirection = Block.FacingDirections.Forward;
+            }
+            else if (connectionToBlockRight && connectionToBlockLeft && connectionToBlockBackward) {
+                blockThatExecute = Register.Blocks["StoneFence"]["ConnectedB"].Instantiate<Block>();
+                blockThatExecute.Rotate(Vector3.Up, Mathf.DegToRad(90));
+                blockThatExecute.FacingDirection = Block.FacingDirections.Backward;
+            }
+            else if (connectionToBlockRight && connectionToBlockForward && connectionToBlockBackward) {
+                blockThatExecute = Register.Blocks["StoneFence"]["ConnectedB"].Instantiate<Block>();
+                blockThatExecute.FacingDirection = Block.FacingDirections.Right;
+            }
+            else if (connectionToBlockLeft && connectionToBlockForward && connectionToBlockBackward) {
+                blockThatExecute = Register.Blocks["StoneFence"]["ConnectedB"].Instantiate<Block>();
+                blockThatExecute.Rotate(Vector3.Up, Mathf.DegToRad(180));
+                blockThatExecute.FacingDirection = Block.FacingDirections.Left;
+            }
+            else if (connectionToBlockForward && connectionToBlockBackward) {
+                blockThatExecute = Register.Blocks["StoneFence"]["ConnectedMeddel"].Instantiate<Block>();
+                blockThatExecute.Rotate(Vector3.Up, Mathf.DegToRad(90));
+            }
+            else if (connectionToBlockRight && connectionToBlockLeft) {
+                blockThatExecute = Register.Blocks["StoneFence"]["ConnectedMeddel"].Instantiate<Block>();
+            }
+            else if (connectionToBlockLeft && connectionToBlockForward) {
+                blockThatExecute = Register.Blocks["StoneFence"]["ConnectedD"].Instantiate<Block>();
+                blockThatExecute.Rotate(Vector3.Up, Mathf.DegToRad(-90));
+                blockThatExecute.FacingDirection = Block.FacingDirections.Left;
+            }
+            else if (connectionToBlockRight && connectionToBlockForward) {
+                blockThatExecute = Register.Blocks["StoneFence"]["ConnectedD"].Instantiate<Block>();
+                blockThatExecute.FacingDirection = Block.FacingDirections.Forward;
+            }
+            else if (connectionToBlockLeft && connectionToBlockBackward) {
+                blockThatExecute = Register.Blocks["StoneFence"]["ConnectedD"].Instantiate<Block>();
+                blockThatExecute.Rotate(Vector3.Up, Mathf.DegToRad(180));
+                blockThatExecute.FacingDirection = Block.FacingDirections.Backward;
+            }
+            else if (connectionToBlockRight && connectionToBlockBackward) {
+                blockThatExecute = Register.Blocks["StoneFence"]["ConnectedD"].Instantiate<Block>();
+                blockThatExecute.Rotate(Vector3.Up, Mathf.DegToRad(90));
+                blockThatExecute.FacingDirection = Block.FacingDirections.Right;
+            }
+            else if (connectionToBlockForward) {
+                blockThatExecute = Register.Blocks["StoneFence"]["ConnectedA"].Instantiate<Block>();
+                blockThatExecute.Rotate(Vector3.Up, Mathf.DegToRad(-90));
+                blockThatExecute.FacingDirection = Block.FacingDirections.Forward;
+            }
+            else if (connectionToBlockBackward) {
+                blockThatExecute = Register.Blocks["StoneFence"]["ConnectedA"].Instantiate<Block>();
+                blockThatExecute.Rotate(Vector3.Up, Mathf.DegToRad(90));
+                blockThatExecute.FacingDirection = Block.FacingDirections.Backward;
+            }
+            else if (connectionToBlockRight) {
+                blockThatExecute = Register.Blocks["StoneFence"]["ConnectedA"].Instantiate<Block>();
+                blockThatExecute.FacingDirection = Block.FacingDirections.Right;
+            }
+            else if (connectionToBlockLeft) {
+                blockThatExecute = Register.Blocks["StoneFence"]["ConnectedA"].Instantiate<Block>();
+                blockThatExecute.Rotate(Vector3.Up, Mathf.DegToRad(180));
+                blockThatExecute.FacingDirection = Block.FacingDirections.Left;
+            }
 
-        blockThatExecute.BlockName = newBlock;
+            blockThatExecute.BlockName = newBlock;
+        }
 
         return blockThatExecute;
     }

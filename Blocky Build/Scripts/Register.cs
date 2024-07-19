@@ -1,6 +1,5 @@
 using Godot;
 using System;
-using System.Reflection;
 
 // This is the register over all content in this game
 public partial class Register : Node {
@@ -56,38 +55,29 @@ public partial class Register : Node {
         }
 
         public T Instantiate<T>(PackedScene.GenEditState editState = PackedScene.GenEditState.Disabled) where T : Node {
-            if (variant.Obj is PackedScene packedScene)
-                return packedScene.Instantiate<T>(editState);
-            else if (variant.Obj is Godot.Collections.Dictionary dict && dict.ContainsKey("Default") && dict["Default"].Obj is PackedScene defaultScene)
-                return defaultScene.Instantiate<T>(editState);
-            else if (variant.Obj is T original) {
-                T clone = (T)((Node)variant).Duplicate();
+            Type typeOfT = typeof(T);
+            Node instance;
 
-                // Ensure the variant is a valid script
-                if (variant.Obj is Script script) {
-                    clone.SetScript(script);
+            if (variant.Obj is PackedScene packedScene) {
+                instance = packedScene.Instantiate(editState);
+            }
+            else if (variant.Obj is Godot.Collections.Dictionary dict && dict.ContainsKey("Default") && dict["Default"].Obj is PackedScene defaultScene) {
+                instance = defaultScene.Instantiate(editState);
+            }
+            else {
+                throw new NotImplementedException("Instantiate can only be used on types of class PackedScene.");
+            }
+
+            if (typeOfT == typeof(Item)) {
+                if (instance is Block block) {
+                    instance = LoadBlockAsItem(block);
                 }
-
-                // Copy data from the original instance to the clone
-                CopyScriptData(original, clone);
-
-                return clone;
-            }
-            else
-                throw new NotImplementedException("Instantiate can only be used on types of class PackedScene and pre-Instantiated assets.");
-        }
-
-        private void CopyScriptData<T>(T source, T destination) where T : Node {
-            Type type = typeof(T);
-            foreach (var field in type.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)) {
-                field.SetValue(destination, field.GetValue(source));
-            }
-
-            foreach (var property in type.GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)) {
-                if (property.CanWrite) {
-                    property.SetValue(destination, property.GetValue(source));
+                else if (!(instance is Item)) {
+                    throw new InvalidCastException($"Unable to cast instance of type '{instance.GetType().Name}' to type 'Item'.");
                 }
             }
+
+            return instance as T;
         }
 
         public void Add(string key, Variant value) {
@@ -124,50 +114,77 @@ public partial class Register : Node {
         }
     }
 
+    // Load in block instance as item
+    public static Item LoadBlockAsItem(Block blockInstance) {
+        // Instantiate the Item from the Items dictionary
+        Item newItem = Items["BlockItem"].Instantiate<Item>();
+
+        // Remove the block from its current parent if any
+        if (blockInstance.GetParent() != null) {
+            blockInstance.GetParent().RemoveChild(blockInstance);
+        }
+
+        // Move the Mesh child to the new item
+        Node meshChild = blockInstance.GetNode<Node>("Mesh");
+        if (meshChild != null) {
+            // Unset the owner before removing and adding
+            meshChild.Owner = null;
+            blockInstance.RemoveChild(meshChild);
+            newItem.AddChild(meshChild);
+            meshChild.Owner = newItem; // Ensure proper ownership after adding
+        }
+
+        // Copy data from the block instance to the new item instance
+        newItem.ItemName = blockInstance.BlockName;
+        newItem.Tags = blockInstance.Tags;
+
+        // Free the block instance
+        blockInstance.QueueFree();
+
+        return newItem;
+    }
+
     public override void _EnterTree() {
         // Load in items
         foreach (PackedScene itemScene in ItemScenes) {
-            Items.Add(itemScene.Instantiate<Item>().ItemName, new RegisterVariant(itemScene));
+            Item itemSceneInstance = itemScene.Instantiate<Item>();
+            Items.Add(itemSceneInstance.ItemName, new RegisterVariant(itemScene));
+            itemSceneInstance.QueueFree();
         }
 
         // Load in Blocks
         foreach (PackedScene blockScene in BlockScenes) {
-            Block block = blockScene.Instantiate<Block>();
+            Block blockSceneInstance = blockScene.Instantiate<Block>();
 
-            if (block.VariationOfBlock == "") {
-                Blocks.Add(block.BlockName, new RegisterVariant(blockScene));
-
-                // Load in block as item (pre-Instantiated)
-                Item newItem = Items["BlockItem"].Instantiate<Item>();
-                newItem.AddChild(block);
-                
-                newItem.ItemName = block.BlockName;
-                newItem.Tags = block.Tags;
-
-                Items.Add(block.BlockName, new RegisterVariant(newItem));
+            if (blockSceneInstance.VariationOfBlock == "") {
+                Blocks.Add(blockSceneInstance.BlockName, new RegisterVariant(blockScene));
             }
             else {
-                if (Blocks.ContainsKey(block.VariationOfBlock)) {
-                    if (Blocks[block.VariationOfBlock].ToVariant().Obj is PackedScene oldBlockScene) {
+                if (Blocks.ContainsKey(blockSceneInstance.VariationOfBlock)) {
+                    if (Blocks[blockSceneInstance.VariationOfBlock].ToVariant().Obj is PackedScene oldBlockScene) {
                         // Convert the single PackedScene entry to a Godot.Collections.Dictionary entry if not already done
-                        Blocks[block.VariationOfBlock] = new RegisterVariant(new Godot.Collections.Dictionary { ["Default"] = oldBlockScene });
+                        Blocks[blockSceneInstance.VariationOfBlock] = new RegisterVariant(new Godot.Collections.Dictionary { ["Default"] = oldBlockScene });
                     }
                 }
 
-                string keyName = block.BlockName;
-                int index = keyName.IndexOf(block.VariationOfBlock);
-                keyName = (index < 0) ? keyName : keyName.Remove(index, block.VariationOfBlock.Length);
+                string keyName = blockSceneInstance.BlockName;
+                int index = keyName.IndexOf(blockSceneInstance.VariationOfBlock);
+                keyName = (index < 0) ? keyName : keyName.Remove(index, blockSceneInstance.VariationOfBlock.Length);
 
-                if (Blocks[block.VariationOfBlock].ToVariant().Obj is Godot.Collections.Dictionary dict)
+                if (Blocks[blockSceneInstance.VariationOfBlock].ToVariant().Obj is Godot.Collections.Dictionary dict)
                     dict[keyName] = blockScene;
                 else
-                    throw new InvalidOperationException($"Expected dictionary but found {Blocks[block.VariationOfBlock].ToVariant().Obj.GetType().Name}");
+                    throw new InvalidOperationException($"Expected dictionary but found {Blocks[blockSceneInstance.VariationOfBlock].ToVariant().Obj.GetType().Name}");
             }
+
+            blockSceneInstance.QueueFree();
         }
 
         // Load in GUI elements
         foreach (PackedScene GUIElementScene in GUIElementScenes) {
-            GUIElements.Add(GUIElementScene.Instantiate().Name, GUIElementScene);
+            var guiElementSceneInstance = GUIElementScene.Instantiate();
+            GUIElements.Add(guiElementSceneInstance.Name, GUIElementScene);
+            guiElementSceneInstance.QueueFree();
         }
     }
 }

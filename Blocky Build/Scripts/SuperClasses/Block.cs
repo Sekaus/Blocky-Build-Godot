@@ -14,7 +14,10 @@ public partial class Block : StaticBody3D {
     public string VariationOfBlock = "";
     [Export]
     public string[] Tags;
+    [Export]
+    public bool canBeConnected = true;
 
+    public bool unbreakable = false;
     public FacingDirections FacingDirection = FacingDirections.Forward;
     private string blockName = "";
     public string BlockName { 

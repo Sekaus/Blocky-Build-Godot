@@ -20,9 +20,10 @@ public partial class WorldData : Node {
         
         WorldTypeLayers[(int)WorldType.Flat] = new[] {
             new WorldLayer() { blockName = "Bedrock", height = 1 },
-            new WorldLayer() { blockName = "Stone", height = 5 },
+            new WorldLayer() { blockName = "Stone", height = 4 },
             new WorldLayer() { blockName = "Dirt", height = 1 },
             new WorldLayer() { blockName = "GrassBlock", height = 1 },
+            new WorldLayer() { blockName = "Grass", height = 1 },
         };
     }
 }
