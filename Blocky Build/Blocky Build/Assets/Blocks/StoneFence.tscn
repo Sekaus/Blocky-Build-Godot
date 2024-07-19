@@ -1,0 +1,24 @@
+[gd_scene load_steps=6 format=3 uid="uid://cmjbskceaxv0s"]
+
+[ext_resource type="Script" path="res://Scripts/SuperClasses/Block.cs" id="1_q4tnj"]
+[ext_resource type="ArrayMesh" uid="uid://cpahufq8t8iyp" path="res://Assets/Blocks/Models/Fence.obj" id="2_3hahk"]
+[ext_resource type="Texture2D" uid="uid://5l6wi68vvt5g" path="res://Assets/Blocks/Textures/Stone.png" id="3_s52ax"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_68vqy"]
+size = Vector3(0.499146, 1, 0.501709)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_2ee41"]
+albedo_texture = ExtResource("3_s52ax")
+
+[node name="StoneFence" type="StaticBody3D" groups=["block"]]
+script = ExtResource("1_q4tnj")
+Type = 1
+
+[node name="CollisionShape" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.000671387, 0, -0.000610352)
+shape = SubResource("BoxShape3D_68vqy")
+
+[node name="Mesh" type="CSGMesh3D" parent="."]
+transform = Transform3D(0.5, 0, 0, 0, 0.5, 0, 0, 0, 0.5, 0, 0, 0)
+mesh = ExtResource("2_3hahk")
+material = SubResource("StandardMaterial3D_2ee41")

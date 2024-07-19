@@ -1,0 +1,23 @@
+[gd_scene load_steps=16 format=3 uid="uid://d3ts66q75vgki"]
+
+[ext_resource type="Script" path="res://Scripts/Register.cs" id="1_ia52c"]
+[ext_resource type="PackedScene" uid="uid://bhv7m2ig2tkg8" path="res://Assets/Blocks/Bedrock.tscn" id="2_s8lpb"]
+[ext_resource type="PackedScene" uid="uid://dn0fw6oaxxyou" path="res://Assets/Blocks/Stone.tscn" id="3_g4h4n"]
+[ext_resource type="PackedScene" uid="uid://c8lc0wo6ypk2h" path="res://Assets/Blocks/GrassBlock.tscn" id="4_780yj"]
+[ext_resource type="PackedScene" uid="uid://djlntbdlpgs3u" path="res://Assets/Blocks/Grass.tscn" id="4_rtx2d"]
+[ext_resource type="PackedScene" uid="uid://bkxs2teghlvrk" path="res://Assets/Blocks/Dirt.tscn" id="5_0xex2"]
+[ext_resource type="PackedScene" uid="uid://dewxg8bi6plrg" path="res://Assets/Blocks/OkePlanks.tscn" id="6_erfuj"]
+[ext_resource type="PackedScene" uid="uid://cmjbskceaxv0s" path="res://Assets/Blocks/StoneFence.tscn" id="7_gyxce"]
+[ext_resource type="PackedScene" uid="uid://dlwhyrimyofe" path="res://Assets/Blocks/StoneFenceConnectedC.tscn" id="10_vkyp7"]
+[ext_resource type="PackedScene" uid="uid://caj8qwh3taynk" path="res://Assets/Blocks/StoneFenceConnectedA.tscn" id="11_hlp0f"]
+[ext_resource type="PackedScene" uid="uid://vehufngtox1k" path="res://Assets/Blocks/StoneFenceConnectedD.tscn" id="12_kajo7"]
+[ext_resource type="PackedScene" uid="uid://c718t3towwbtj" path="res://Assets/Items/BlockItem.tscn" id="13_i0xcm"]
+[ext_resource type="PackedScene" uid="uid://cqqs3gcg8rnqe" path="res://Assets/Blocks/StoneFenceConnectedB.tscn" id="13_pnotn"]
+[ext_resource type="PackedScene" uid="uid://d2cvyucnrvhuu" path="res://Assets/GUI/ItemSlotGUI.tscn" id="13_snqum"]
+[ext_resource type="PackedScene" uid="uid://dhlxset11rb7q" path="res://Assets/Blocks/StoneFenceConnectedMeddel.tscn" id="15_umc28"]
+
+[node name="Register" type="Node"]
+script = ExtResource("1_ia52c")
+BlockScenes = Array[PackedScene]([ExtResource("2_s8lpb"), ExtResource("5_0xex2"), ExtResource("4_rtx2d"), ExtResource("6_erfuj"), ExtResource("3_g4h4n"), ExtResource("7_gyxce"), ExtResource("11_hlp0f"), ExtResource("13_pnotn"), ExtResource("10_vkyp7"), ExtResource("12_kajo7"), ExtResource("15_umc28"), ExtResource("4_780yj")])
+ItemScenes = Array[PackedScene]([ExtResource("13_i0xcm")])
+GUIElementScenes = Array[PackedScene]([ExtResource("13_snqum")])
