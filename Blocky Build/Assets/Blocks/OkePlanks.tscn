@@ -7,6 +7,7 @@
 [sub_resource type="BoxShape3D" id="BoxShape3D_bensk"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_tn4o6"]
+resource_local_to_scene = true
 albedo_texture = ExtResource("3_6vf71")
 
 [node name="OkePlanks" type="StaticBody3D" groups=["block"]]

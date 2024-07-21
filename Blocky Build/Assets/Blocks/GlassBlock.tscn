@@ -1,0 +1,25 @@
+[gd_scene load_steps=6 format=3 uid="uid://dqmnqolh5cf38"]
+
+[ext_resource type="ArrayMesh" uid="uid://dqdipxfudh3db" path="res://Assets/Blocks/Models/Block.obj" id="1_jto0b"]
+[ext_resource type="Script" path="res://Scripts/SuperClasses/Block.cs" id="1_swrg8"]
+[ext_resource type="Texture2D" uid="uid://dbxefj6yxiysm" path="res://Assets/Blocks/Textures/glass.png" id="2_ib41e"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_itk8u"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_xkii2"]
+resource_local_to_scene = true
+transparency = 1
+albedo_texture = ExtResource("2_ib41e")
+
+[node name="GlassBlock" type="StaticBody3D" groups=["block"]]
+script = ExtResource("1_swrg8")
+Tags = PackedStringArray("glass")
+canBeConnected = false
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("BoxShape3D_itk8u")
+
+[node name="Mesh" type="CSGMesh3D" parent="."]
+transform = Transform3D(0.5, 0, 0, 0, 0.5, 0, 0, 0, 0.5, 0, 0, 0)
+mesh = ExtResource("1_jto0b")
+material = SubResource("StandardMaterial3D_xkii2")

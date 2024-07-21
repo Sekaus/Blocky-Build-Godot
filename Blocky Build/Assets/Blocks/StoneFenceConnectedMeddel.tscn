@@ -8,6 +8,7 @@
 size = Vector3(1, 0.752197, 0.247314)
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_qsm23"]
+resource_local_to_scene = true
 albedo_texture = ExtResource("3_btjyy")
 
 [node name="StoneFenceConnectedMeddel" type="StaticBody3D" groups=["block"]]

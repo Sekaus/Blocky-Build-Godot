@@ -8,6 +8,7 @@
 size = Vector3(1, 0.0620728, 1)
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_q53pr"]
+resource_local_to_scene = true
 albedo_texture = ExtResource("3_2md05")
 
 [node name="Grass" type="StaticBody3D" groups=["block"]]

@@ -13,7 +13,8 @@ size = Vector3(0.999968, 0.750946, 0.249756)
 [sub_resource type="BoxShape3D" id="BoxShape3D_mkhlc"]
 size = Vector3(0.246368, 0.750916, 0.249644)
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_2ee41"]
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_o5lqp"]
+resource_local_to_scene = true
 albedo_texture = ExtResource("3_y4ybp")
 
 [node name="StoneFenceConnectedB" type="StaticBody3D" groups=["block"]]
@@ -37,4 +38,4 @@ shape = SubResource("BoxShape3D_mkhlc")
 [node name="Mesh" type="CSGMesh3D" parent="."]
 transform = Transform3D(0.5, 0, 0, 0, 0.5, 0, 0, 0, 0.5, 0, 0, 0)
 mesh = ExtResource("2_d4jbr")
-material = SubResource("StandardMaterial3D_2ee41")
+material = SubResource("StandardMaterial3D_o5lqp")
