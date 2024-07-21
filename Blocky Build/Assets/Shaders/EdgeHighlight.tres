@@ -5,5 +5,8 @@
 [resource]
 render_priority = 0
 shader = ExtResource("1_ruv1j")
-shader_parameter/outline_color = Color(0, 0, 0, 1)
-shader_parameter/outline_width = 2.0
+shader_parameter/modelColor = Color(0.5, 0.5, 0.5, 1)
+shader_parameter/wireframeColor = Color(0.5, 0.5, 0.5, 1)
+shader_parameter/width = 1.5
+shader_parameter/modelOpacity = 0.25
+shader_parameter/filtered = false

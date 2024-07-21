@@ -1,23 +1,45 @@
+// source: https://godotshaders.com/shader/wireframe-shader/
+
 shader_type spatial;
-render_mode cull_front, unshaded;
 
-uniform vec4 outline_color : source_color;
-uniform float outline_width = 1.0;
+render_mode unshaded;
 
-void vertex() {
-	vec4 clip_position = PROJECTION_MATRIX * (MODELVIEW_MATRIX * vec4(VERTEX, 1.0));
-	vec3 clip_normal = mat3(PROJECTION_MATRIX) * (mat3(MODELVIEW_MATRIX) * NORMAL);
-	
-	vec2 offset = normalize(clip_normal.xy) / VIEWPORT_SIZE * clip_position.w * outline_width * 2.0;
-	
-	clip_position.xy += offset;
-	
-	POSITION = clip_position;
+uniform vec4 modelColor : source_color;
+uniform vec4 wireframeColor : source_color;
+
+uniform float width : hint_range(0.0, 15.) = 1.;
+uniform float modelOpacity : hint_range(0.0, 1.0) = 1.;
+
+uniform bool filtered = false;
+
+const vec3 vectors[3] = {
+	vec3(1.0, 0.0 ,0.0),
+	vec3(0.0, 1.0 ,0.0),
+	vec3(0.0, 0.0 ,1.0)
+};
+
+varying vec3 baryCoord;
+
+void vertex()
+{
+	baryCoord = vectors[VERTEX_ID % 3];
 }
 
 void fragment() {
-	ALBEDO = outline_color.rgb;
-	if (outline_color.a < 1.0) {
-		ALPHA = outline_color.a;
-	}
+	vec3 dBaryCoordX = dFdx(baryCoord);
+	vec3 dBaryCoordY = dFdy(baryCoord);
+	vec3 dBaryCoord  = sqrt(dBaryCoordX*dBaryCoordX + dBaryCoordY*dBaryCoordY);
+
+	vec3 remap = smoothstep(
+		vec3(0.0),
+		dBaryCoord * width,
+		baryCoord
+	);
+	
+	remap = filtered ? remap : step(.5, remap);
+
+	float closestEdge = min(min(remap.x, remap.y), remap.z);
+
+	ALBEDO = mix(wireframeColor, modelColor, closestEdge).xyz;
+	ALPHA = mix(1., modelOpacity, closestEdge);
 }
