@@ -281,9 +281,6 @@ public partial class Game : Node {
                 else if (blocksToUpdate["Left"].FacingDirection == Block.FacingDirections.Forward && blocksToUpdate["Backward"].FacingDirection == Block.FacingDirections.Left) {
                     blockThatExecute = Register.Blocks[blockThatExecute.BlockName]["ConnectedB"].Instantiate<Block>();
                     blockThatExecute = RotateBlock(blockThatExecute, new(0, turnUp, 0), true);
-                    GD.Print("New data:");
-                    GD.Print(blocksToUpdate["Left"].UpsideDown);
-                    GD.Print(blocksToUpdate["Backward"].UpsideDown);
                 }
                 else if (blocksToUpdate["Right"].FacingDirection == Block.FacingDirections.Forward && blocksToUpdate["Backward"].FacingDirection == Block.FacingDirections.Right) {
                     blockThatExecute = Register.Blocks[blockThatExecute.BlockName]["ConnectedB"].Instantiate<Block>();
