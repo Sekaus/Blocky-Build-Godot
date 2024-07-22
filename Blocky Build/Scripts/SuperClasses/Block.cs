@@ -19,6 +19,8 @@ public partial class Block : StaticBody3D {
 
     public bool unbreakable = false;
     public FacingDirections FacingDirection = FacingDirections.Forward;
+    public bool upsideDown = false;
+
     private string blockName = "";
     public string BlockName { 
         get {
@@ -34,12 +36,26 @@ public partial class Block : StaticBody3D {
     
     public enum BlockType {
         Normal,
-        Fence
+        Fence,
+        Roof,
+        Stairs,
+        Door
     }
     public enum FacingDirections { 
         Forward, 
         Backward,
         Right,
-        Left
+        Left,
+        None
     }
+
+    public Block() { }
+
+    public Block(bool noFacing) {
+        FacingDirection = FacingDirections.None;
+    }
+    
+    // Event handlers
+
+    public virtual void OnClick() { }
 }
