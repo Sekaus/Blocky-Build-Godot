@@ -207,13 +207,13 @@ public partial class PlayerController : RigidBody3D {
 		}
 	}
 
-	// move player
-	bool onGroundDetect = false;
-	Vector3 velocity;
-	float playerRotateX;
-	float playerRotateY;
-	float playerCameraRotateionX;
-	float maxPlayerCameraRotateionX = 1.5870861f;
+	private bool onGroundDetect = false;
+	private Vector3 velocity;
+	private float playerRotateX;
+	private float playerRotateY;
+	private float playerCameraRotationX;
+	private const float maxPlayerCameraRotationX = 1.5870861f;
+
 	public override void _PhysicsProcess(double delta) {
 		velocity = new Vector3(0.0f, LinearVelocity.Y, 0.0f);
 
@@ -239,12 +239,14 @@ public partial class PlayerController : RigidBody3D {
 
 		LinearVelocity = velocity;
 
-		// rotate player
-		playerRotateX *= ((float)delta) * MouseSensitivity;
-		playerCameraRotateionX = Mathf.Clamp(playerCameraRotateionX + playerRotateX, -maxPlayerCameraRotateionX, maxPlayerCameraRotateionX);
-		if (playerCameraRotateionX < maxPlayerCameraRotateionX && playerCameraRotateionX > -maxPlayerCameraRotateionX)
-			playerCamera.RotateX(playerRotateX);
-		RotateY(playerRotateY * ((float)delta) * MouseSensitivity);
+		// Rotate player
+		playerRotateX = playerRotateX * MouseSensitivity * (float)delta;
+		playerRotateY = playerRotateY * MouseSensitivity * (float)delta;
+
+		playerCameraRotationX = Mathf.Clamp(playerCameraRotationX + playerRotateX, -maxPlayerCameraRotationX, maxPlayerCameraRotationX);
+		playerCamera.Rotation = new Vector3(playerCameraRotationX, playerCamera.Rotation.Y, playerCamera.Rotation.Z);
+
+		RotateY(playerRotateY);
 
 		playerRotateX = 0f;
 		playerRotateY = 0f;
