@@ -321,9 +321,10 @@ public partial class PlayerController : RigidBody3D {
 								if (newBlock.Type != Block.BlockType.Roof && newBlock.Type != Block.BlockType.Stairs && newBlock.Type != Block.BlockType.Door)
 									rotation = Vector3.Zero;
 								else {
-									rotation = -Position.DirectionTo(newBlockPose).Round();
-									if(newBlock.Type != Block.BlockType.Door)
-										rotation.Y -= playerCamera.Basis.Z.Y;
+									rotation = -Position.DirectionTo(newBlockPose).Round() + normal;
+									if (newBlock.Type != Block.BlockType.Door) {
+										rotation.Y = Mathf.Clamp(-playerCamera.Basis.Z.Y, 0, 1);
+									}
 								}
 
 								if (block.BlockName != "Grass")

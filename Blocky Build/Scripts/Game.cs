@@ -33,44 +33,50 @@ public partial class Game : Node {
     }
 
     // Rotate a block at xyz (hole turns)
-    public Block RotateBlock(Block block, Vector3 rotation) {
-        bool upsideDown = rotation.Y > 0.165f;
-        if (rotation != Vector3.Zero) {
-            if (rotation.X > 0) {
-                block.FacingDirection = Block.FacingDirections.Left;
-                if (upsideDown) {
-                    block.Rotate(Vector3.Forward, Mathf.DegToRad(90));
-                    block.upsideDown = true;
-                }
-            }
-            else if (rotation.X < 0) {
-                block.Rotate(Vector3.Up, Mathf.DegToRad(180));
-                block.FacingDirection = Block.FacingDirections.Right;
-                if (upsideDown) {
-                    block.Rotate(Vector3.Back, Mathf.DegToRad(90));
-                    block.upsideDown = true;
-                }
-            }
-            else if (rotation.Z > 0) {
-                block.Rotate(Vector3.Up, Mathf.DegToRad(-90));
-                block.FacingDirection = Block.FacingDirections.Forward;
-                if (upsideDown) {
-                    block.Rotate(Vector3.Right, Mathf.DegToRad(90));
-                    block.upsideDown = true;
-                }
-            }
-            else if (rotation.Z < 0) {
-                block.Rotate(Vector3.Up, Mathf.DegToRad(90));
-                block.FacingDirection = Block.FacingDirections.Backward;
-                if (upsideDown) {
-                    block.Rotate(Vector3.Left, Mathf.DegToRad(90));
-                    block.upsideDown = true;
-                }
+    public Block RotateBlock(Block block, Vector3 rotation, bool doubleRotationUp = false) {
+        bool upsideDown = rotation.Y > 0;
+        int rotationUp = doubleRotationUp ? 180 : 90;
+
+        if (rotation == Vector3.Zero) {
+            return block;
+        }
+
+        if (rotation.X > 0) {
+            block.FacingDirection = Block.FacingDirections.Left;
+            if (upsideDown) {
+                block.Rotate(Vector3.Forward, Mathf.DegToRad(rotationUp));
             }
         }
+        else if (rotation.X < 0) {
+            block.Rotate(Vector3.Up, Mathf.DegToRad(180));
+            block.FacingDirection = Block.FacingDirections.Right;
+            if (upsideDown) {
+                block.Rotate(Vector3.Back, Mathf.DegToRad(rotationUp));
+            }
+        }
+        else if (rotation.Z > 0) {
+            block.Rotate(Vector3.Up, Mathf.DegToRad(-90));
+            block.FacingDirection = Block.FacingDirections.Forward;
+            if (upsideDown) {
+                block.Rotate(Vector3.Right, Mathf.DegToRad(rotationUp));
+            }
+        }
+        else if (rotation.Z < 0) {
+            block.Rotate(Vector3.Up, Mathf.DegToRad(90));
+            block.FacingDirection = Block.FacingDirections.Backward;
+            if (upsideDown) {
+                block.Rotate(Vector3.Left, Mathf.DegToRad(rotationUp));
+            }
+        }
+        else if (rotation == Vector3.Up || rotation == Vector3.Zero)
+            block.Rotate(Vector3.Forward, Mathf.DegToRad(rotationUp));
+
+        if (upsideDown)
+            block.UpsideDown = true;
 
         return block;
     }
+
 
     // Remove block in world at xyz
     public void RemoveBlock(int x, int y, int z, bool runBlockUpdates = true) {
@@ -125,6 +131,7 @@ public partial class Game : Node {
                     Vector3I blockPosition = new Vector3I(Mathf.RoundToInt(block.Value.Position.X), Mathf.RoundToInt(block.Value.Position.Y), Mathf.RoundToInt(block.Value.Position.Z));
 
                     updatedBlock.Rotation = block.Value.Rotation;
+                    updatedBlock.UpsideDown = block.Value.UpsideDown;
                     updatedBlock.FacingDirection = block.Value.FacingDirection;
                     
                     updatedBlock = UpdateBlock(blockPosition.X, blockPosition.Y, blockPosition.Z, updatedBlock);
@@ -232,52 +239,64 @@ public partial class Game : Node {
             }
         }
         else if (blockThatExecute.Type == Block.BlockType.Roof || blockThatExecute.Type == Block.BlockType.Stairs) {
-
             Block.BlockType type = blockThatExecute.Type;
+            int turnUp = blockThatExecute.UpsideDown ? 1 : 0;
 
-            int connectedBlcokCount = 0;
 
             if (blocksToUpdate["Right"].BlockName != "" && blocksToUpdate["Right"].Type == type)
-                connectedBlcokCount++;
+                connectionToBlockRight = true;
             if (blocksToUpdate["Left"].BlockName != "" && blocksToUpdate["Left"].Type == type)
-                connectedBlcokCount++;
+                connectionToBlockLeft = true;
             if (blocksToUpdate["Forward"].BlockName != "" && blocksToUpdate["Forward"].Type == type)
-                connectedBlcokCount++;
+                connectionToBlockForward = true;
             if (blocksToUpdate["Backward"].BlockName != "" && blocksToUpdate["Backward"].Type == type)
-                connectedBlcokCount++;
+                connectionToBlockBackward = true;
 
-            //if (connectedBlcokCount < 3) {
-            if (blocksToUpdate["Forward"].FacingDirection == Block.FacingDirections.Right && blocksToUpdate["Left"].FacingDirection == Block.FacingDirections.Forward) {
+            if (
+                (connectionToBlockRight && connectionToBlockForward) ||
+                (connectionToBlockRight && connectionToBlockBackward) ||
+                (connectionToBlockLeft && connectionToBlockForward) ||
+                (connectionToBlockLeft && connectionToBlockBackward)
+               ) {
+                if (blocksToUpdate["Forward"].FacingDirection == Block.FacingDirections.Right && blocksToUpdate["Left"].FacingDirection == Block.FacingDirections.Forward) {
                     blockThatExecute = Register.Blocks[blockThatExecute.BlockName]["ConnectedA"].Instantiate<Block>();
-                    blockThatExecute = RotateBlock(blockThatExecute, new(0, 0, 1));
+                    blockThatExecute = RotateBlock(blockThatExecute, new(0, turnUp, 1), true);
                 }
                 else if (blocksToUpdate["Backward"].FacingDirection == Block.FacingDirections.Right && blocksToUpdate["Left"].FacingDirection == Block.FacingDirections.Backward) {
                     blockThatExecute = Register.Blocks[blockThatExecute.BlockName]["ConnectedA"].Instantiate<Block>();
-                    blockThatExecute = RotateBlock(blockThatExecute, new(-1, 0, 0));
+                    blockThatExecute = RotateBlock(blockThatExecute, new(-1, turnUp, 0), true);
                 }
                 else if (blocksToUpdate["Right"].FacingDirection == Block.FacingDirections.Backward && blocksToUpdate["Backward"].FacingDirection == Block.FacingDirections.Left) {
                     blockThatExecute = Register.Blocks[blockThatExecute.BlockName]["ConnectedA"].Instantiate<Block>();
-                    blockThatExecute = RotateBlock(blockThatExecute, new(0, 0, -1));
+                    blockThatExecute = RotateBlock(blockThatExecute, new(0, turnUp, -1), true);
                 }
                 else if (blocksToUpdate["Right"].FacingDirection == Block.FacingDirections.Forward && blocksToUpdate["Forward"].FacingDirection == Block.FacingDirections.Left) {
                     blockThatExecute = Register.Blocks[blockThatExecute.BlockName]["ConnectedA"].Instantiate<Block>();
+                    blockThatExecute = RotateBlock(blockThatExecute, new(0, turnUp, 0), true);
                 }
                 else if (blocksToUpdate["Left"].FacingDirection == Block.FacingDirections.Backward && blocksToUpdate["Forward"].FacingDirection == Block.FacingDirections.Left) {
                     blockThatExecute = Register.Blocks[blockThatExecute.BlockName]["ConnectedB"].Instantiate<Block>();
-                    blockThatExecute = RotateBlock(blockThatExecute, new(0, 0, -1));
+                    blockThatExecute = RotateBlock(blockThatExecute, new(0, turnUp, -1), true);
                 }
                 else if (blocksToUpdate["Left"].FacingDirection == Block.FacingDirections.Forward && blocksToUpdate["Backward"].FacingDirection == Block.FacingDirections.Left) {
                     blockThatExecute = Register.Blocks[blockThatExecute.BlockName]["ConnectedB"].Instantiate<Block>();
+                    blockThatExecute = RotateBlock(blockThatExecute, new(0, turnUp, 0), true);
+                    GD.Print("New data:");
+                    GD.Print(blocksToUpdate["Left"].UpsideDown);
+                    GD.Print(blocksToUpdate["Backward"].UpsideDown);
                 }
-                else if (blocksToUpdate["Right"].FacingDirection == Block.FacingDirections.Forward && blocksToUpdate["Backward"].FacingDirection == Block.FacingDirections.Right  && blocksToUpdate["Forward"].FacingDirection != Block.FacingDirections.Forward) {
+                else if (blocksToUpdate["Right"].FacingDirection == Block.FacingDirections.Forward && blocksToUpdate["Backward"].FacingDirection == Block.FacingDirections.Right) {
                     blockThatExecute = Register.Blocks[blockThatExecute.BlockName]["ConnectedB"].Instantiate<Block>();
-                    blockThatExecute = RotateBlock(blockThatExecute, new(0, 0, 1));
+                    blockThatExecute = RotateBlock(blockThatExecute, new(0, turnUp, 1), true);
                 }
                 else if (blocksToUpdate["Right"].FacingDirection == Block.FacingDirections.Backward && blocksToUpdate["Forward"].FacingDirection == Block.FacingDirections.Right) {
                     blockThatExecute = Register.Blocks[blockThatExecute.BlockName]["ConnectedB"].Instantiate<Block>();
-                    blockThatExecute = RotateBlock(blockThatExecute, new(-1, 0, 0));
+                    blockThatExecute = RotateBlock(blockThatExecute, new(-1, turnUp, 0), true);
                 }
-            //}
+
+                if (turnUp == 1)
+                    blockThatExecute.Rotate(Vector3.Up, Mathf.DegToRad(90));
+            }
         }
 
         blockThatExecute.BlockName = newBlock;
