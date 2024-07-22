@@ -17,9 +17,9 @@ public partial class Block : StaticBody3D {
     [Export]
     public bool canBeConnected = true;
 
-    public bool unbreakable = false;
+    public bool Unbreakable = false;
     public FacingDirections FacingDirection = FacingDirections.Forward;
-    public bool upsideDown = false;
+    public bool UpsideDown = false;
 
     private string blockName = "";
     public string BlockName { 
