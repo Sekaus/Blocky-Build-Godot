@@ -269,7 +269,7 @@ public partial class Game : Node {
                 else if (blocksToUpdate["Left"].FacingDirection == Block.FacingDirections.Forward && blocksToUpdate["Backward"].FacingDirection == Block.FacingDirections.Left) {
                     blockThatExecute = Register.Blocks[blockThatExecute.BlockName]["ConnectedB"].Instantiate<Block>();
                 }
-                else if (blocksToUpdate["Right"].FacingDirection == Block.FacingDirections.Forward && blocksToUpdate["Backward"].FacingDirection == Block.FacingDirections.Right) {
+                else if (blocksToUpdate["Right"].FacingDirection == Block.FacingDirections.Forward && blocksToUpdate["Backward"].FacingDirection == Block.FacingDirections.Right  && blocksToUpdate["Forward"].FacingDirection != Block.FacingDirections.Forward) {
                     blockThatExecute = Register.Blocks[blockThatExecute.BlockName]["ConnectedB"].Instantiate<Block>();
                     blockThatExecute = RotateBlock(blockThatExecute, new(0, 0, 1));
                 }
