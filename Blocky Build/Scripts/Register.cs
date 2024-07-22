@@ -152,7 +152,7 @@ public partial class Register : Node {
             itemSceneInstance.QueueFree();
         }
 
-        // Load in Blocks
+        // Load in blocks
         foreach (PackedScene blockScene in BlockScenes) {
             Block blockSceneInstance = blockScene.Instantiate<Block>();
 

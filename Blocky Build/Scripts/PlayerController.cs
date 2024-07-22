@@ -8,9 +8,9 @@ public partial class PlayerController : RigidBody3D {
 	public float JumpPower = 300f;
 	[Export]
 	public float MouseSensitivity = 2f;
-	public Inventory Hotbar = new Inventory(7, 1);
+	public Inventory Hotbar = new Inventory(10, 1);
 	public Godot.Collections.Dictionary<int, Control> HotBarGUISlots = new Godot.Collections.Dictionary<int, Control>();
-	
+
 	Node3D leftHand;
 	Camera3D playerCamera;
 	RayCast3D playerRayCast;
@@ -19,6 +19,8 @@ public partial class PlayerController : RigidBody3D {
 	Game game;
 	WorldData worldData;
 	Control inventoryGUI;
+
+	WeakReference<CsgMesh3D> blockInFocusRef = new WeakReference<CsgMesh3D>(null);
 
 	// Add item and item display to inventory
 	public void AddItemToHotbar(Item item, int count = 1, int toSlot = -1) {
@@ -154,10 +156,10 @@ public partial class PlayerController : RigidBody3D {
 	}
 
 	public string GetItemInLeftHand() {
-		if(leftHand.GetChildOrNull<Item>(0) != null)
+		if (leftHand.GetChildOrNull<Item>(0) != null)
 			return leftHand.GetChild<Item>(0).ItemName;
 		return "";
-    }
+	}
 
 	public override void _Ready() {
 		game = GetParent<Game>();
@@ -179,17 +181,22 @@ public partial class PlayerController : RigidBody3D {
 			HotBarGUISlots.Add(i, newItemSlot);
 
 			if (i < Hotbar.Height)
-                inventoryGUI.GetNode("ItemContainerGUIH").GetNode("ItemContainerGUIV").AddChild(newItemSlot);
+				inventoryGUI.GetNode("ItemContainerGUIH").GetNode("ItemContainerGUIV").AddChild(newItemSlot);
 			else
 				inventoryGUI.GetNode("ItemContainerGUIH").AddChild(newItemSlot);
 		}
 
-		AddItemToHotbar(Register.Blocks["Dirt"].Instantiate<Item>(), 100);
-		AddItemToHotbar(Register.Blocks["Grass"].Instantiate<Item>(), 100);
-		AddItemToHotbar(Register.Blocks["GrassBlock"].Instantiate<Item>(), 100);
-		AddItemToHotbar(Register.Blocks["OkePlanks"].Instantiate<Item>(), 100);
-		AddItemToHotbar(Register.Blocks["Stone"].Instantiate<Item>(), 100);
-		AddItemToHotbar(Register.Blocks["StoneFence"].Instantiate<Item>(), 100);
+		AddItemToHotbar(Register.Blocks["Dirt"].Instantiate<Item>());
+		AddItemToHotbar(Register.Blocks["GrassBlock"].Instantiate<Item>());
+		AddItemToHotbar(Register.Blocks["OkePlanks"].Instantiate<Item>());
+		AddItemToHotbar(Register.Blocks["OkeDoorTypeA"].Instantiate<Item>());
+        AddItemToHotbar(Register.Blocks["OkeRoof"].Instantiate<Item>());
+		AddItemToHotbar(Register.Blocks["Stone"].Instantiate<Item>());
+		AddItemToHotbar(Register.Blocks["StoneStairs"].Instantiate<Item>());
+		AddItemToHotbar(Register.Blocks["StoneFence"].Instantiate<Item>());
+		AddItemToHotbar(Register.Blocks["GlassBlock"].Instantiate<Item>());
+
+		EquipItemFromHotbar(0);
 	}
 
 	// Method to handle the collision event of HitBox
@@ -203,7 +210,6 @@ public partial class PlayerController : RigidBody3D {
 	// move player
 	bool onGroundDetect = false;
 	Vector3 velocity;
-	float maxLinearVelocityYForJump = 0.1f;
 	float playerRotateX;
 	float playerRotateY;
 	float playerCameraRotateionX;
@@ -244,70 +250,109 @@ public partial class PlayerController : RigidBody3D {
 		playerRotateY = 0f;
 	}
 
-	public override void _Input(InputEvent @event) {
-		if (@event is InputEventMouseMotion mouseMotion) {
-			// rotate player and player camera
+	public override void _Input(InputEvent inputEvent) {
+		if (inputEvent is InputEventMouseMotion mouseMotion) {
+			// Rotate player and player camera
 			playerRotateX = Mathf.DegToRad(-mouseMotion.Relative.Y);
 			playerRotateY = Mathf.DegToRad(-mouseMotion.Relative.X);
 		}
 
-		// rayCast Hit
+		// RayCast Hit
 		if (playerRayCast.CollideWithBodies) {
 			var collider = playerRayCast.GetCollider();
 			if (collider is Node node) {
-				foreach (string groupe in node.GetGroups()) {
-					switch (groupe) {
-						case "block":
-							Block block = (Block)node;
-							if (Input.IsActionJustPressed("hit_and_remove")) {
-								if (block.BlockName != "Bedrock")
-									game.RemoveBlock(Mathf.RoundToInt(((Block)node).Position.X), Mathf.RoundToInt(((Block)node).Position.Y), Mathf.RoundToInt(((Block)node).Position.Z));
+				foreach (string group in node.GetGroups()) {
+					if (group == "block") {
+						Block block = (Block)node;
+
+						// Safely load the material
+						Material edgeHighlight = (Material)GD.Load("res://Assets/Shaders/EdgeHighlight.tres");
+						if (edgeHighlight == null) {
+							GD.PrintErr("Failed to load material");
+							return;
+						}
+
+						// Get the CsgMesh3D node from the block
+						var blockMesh = block.GetNode<CsgMesh3D>("Mesh");
+
+						if (!IsInstanceValid(blockMesh)) {
+							GD.PrintErr("CsgMesh3D node is not valid");
+							return;
+						}
+
+						// Apply highlight
+						if (blockInFocusRef.TryGetTarget(out var blockInFocus) && IsInstanceValid(blockInFocus)) {
+							// Remove previous highlight if exists
+							if (blockInFocus.Material?.NextPass != null)
+								blockInFocus.Material.NextPass = null;
+
+							// Set new highlight
+							blockInFocusRef.SetTarget(blockMesh);
+
+							if (blockMesh.Material != null)
+								blockMesh.Material.NextPass = edgeHighlight;
+						}
+						else {
+							// Set new highlight if blockInFocus was null
+							blockInFocusRef.SetTarget(blockMesh);
+							if (blockMesh.Material != null)
+								blockMesh.Material.NextPass = edgeHighlight;
+						}
+
+						// Perform actions based on input
+
+						if (Input.IsActionJustPressed("hit_and_remove")) {
+							if (block.BlockName != "Bedrock") {
+								game.RemoveBlock(Mathf.RoundToInt(block.Position.X), Mathf.RoundToInt(block.Position.Y), Mathf.RoundToInt(block.Position.Z));
+								blockInFocusRef.SetTarget(null);
 							}
-							else if (Input.IsActionJustPressed("integrate_and_place")) {
-								Vector3 newBlockPose = block.Position + playerRayCast.GetCollisionNormal();
+						}
+						else if (Input.IsActionJustPressed("integrate_and_place")) {
+							if (GetItemInLeftHand() != "") {
+								Vector3 normal = playerRayCast.GetCollisionNormal();
+								Vector3 newBlockPose = block.Position + normal;
+
+								Block newBlock = Register.Blocks[GetItemInLeftHand()]?.Instantiate<Block>();
+
+								// Rotate the new block if it use rotation
+								Vector3 rotation;
+								if (newBlock.Type != Block.BlockType.Roof && newBlock.Type != Block.BlockType.Stairs && newBlock.Type != Block.BlockType.Door)
+									rotation = Vector3.Zero;
+								else {
+									rotation = -Position.DirectionTo(newBlockPose).Round();
+									if(newBlock.Type != Block.BlockType.Door)
+										rotation.Y -= playerCamera.Basis.Z.Y;
+								}
+
 								if (block.BlockName != "Grass")
-									game.SetBlock(GetItemInLeftHand(), Mathf.RoundToInt(newBlockPose.X), Mathf.RoundToInt(newBlockPose.Y), Mathf.RoundToInt(newBlockPose.Z));
+									game.SetBlock(newBlock, Mathf.RoundToInt(newBlockPose.X), Mathf.RoundToInt(newBlockPose.Y), Mathf.RoundToInt(newBlockPose.Z), true, rotation);
 								else {
 									if (GetItemInLeftHand() != "") {
 										game.RemoveBlock(Mathf.RoundToInt(newBlockPose.X), Mathf.RoundToInt(newBlockPose.Y - 1), Mathf.RoundToInt(newBlockPose.Z));
-										game.SetBlock(GetItemInLeftHand(), Mathf.RoundToInt(newBlockPose.X), Mathf.RoundToInt(newBlockPose.Y - 1), Mathf.RoundToInt(newBlockPose.Z));
+										game.SetBlock(newBlock, Mathf.RoundToInt(newBlockPose.X), Mathf.RoundToInt(newBlockPose.Y - 1), Mathf.RoundToInt(newBlockPose.Z), true, rotation);
 									}
 								}
 							}
-							break;
+							else if (block is Door)
+								block.OnClick();
+						}
 					}
+				}
+			}
+			else {
+				if (blockInFocusRef.TryGetTarget(out var blockInFocus) && IsInstanceValid(blockInFocus)) {
+					// Remove previous highlight if exists
+					if (blockInFocus.Material?.NextPass != null)
+						blockInFocus.Material.NextPass = null;
 				}
 			}
 		}
 
-		// shortcouts
-
 		// Hotbar shortcuts
-		if (Input.IsActionJustPressed("hotbar_slot_0"))
-			EquipItemFromHotbar(0);
-		else if (Input.IsActionJustPressed("hotbar_slot_1"))
-			EquipItemFromHotbar(1);
-		else if (Input.IsActionJustPressed("hotbar_slot_2"))
-			EquipItemFromHotbar(2);
-		else if (Input.IsActionJustPressed("hotbar_slot_3"))
-			EquipItemFromHotbar(3);
-		else if (Input.IsActionJustPressed("hotbar_slot_4"))
-			EquipItemFromHotbar(4);
-		else if (Input.IsActionJustPressed("hotbar_slot_5"))
-			EquipItemFromHotbar(5);
-		else if (Input.IsActionJustPressed("hotbar_slot_6"))
-			EquipItemFromHotbar(6);
-		/*else if (Input.IsActionJustPressed("hotbar_slot_7")) {
-			EquipItemFromHotbar(7);
+		for (int i = 0; i < 10; i++) {
+			if (Input.IsActionJustPressed($"hotbar_slot_{i}")) {
+				EquipItemFromHotbar(i);
+			}
 		}
-		else if (Input.IsActionJustPressed("hotbar_slot_8")) {
-			EquipItemFromHotbar(8);
-		}
-		else if (Input.IsActionJustPressed("hotbar_slot_9")
-			EquipItemFromHotbar(9);
-
-		else if (Input.IsActionJustPressed("hotbar_slot_0")
-			EquipItemFromHotbar(10);*/
-
 	}
 }

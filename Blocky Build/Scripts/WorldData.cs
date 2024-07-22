@@ -23,7 +23,6 @@ public partial class WorldData : Node {
             new WorldLayer() { blockName = "Stone", height = 4 },
             new WorldLayer() { blockName = "Dirt", height = 1 },
             new WorldLayer() { blockName = "GrassBlock", height = 1 },
-            new WorldLayer() { blockName = "Grass", height = 1 },
         };
     }
 }
