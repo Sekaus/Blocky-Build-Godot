@@ -1,6 +1,6 @@
 [gd_scene load_steps=5 format=3 uid="uid://b56rds5e6x5ms"]
 
-[ext_resource type="Script" uid="uid://bjlx24uw2g8vk" path="res://Scripts/PlayerController.cs" id="1_wiedh"]
+[ext_resource type="Script" uid="uid://bjlx24uw2g8vk" path="res://Assets/Scripts/PlayerController.cs" id="1_wiedh"]
 [ext_resource type="PackedScene" uid="uid://c5sivuxjjyplp" path="res://Assets/GUI/InventoryGUI.tscn" id="2_seu08"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_igyyr"]

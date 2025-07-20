@@ -1,7 +1,7 @@
 [gd_scene load_steps=9 format=3 uid="uid://dxetwwdwbjn36"]
 
-[ext_resource type="Script" uid="uid://dl3n6xrtncl4x" path="res://Scripts/Game.cs" id="1_b2yd6"]
-[ext_resource type="Script" uid="uid://cdvse7vlat2ui" path="res://Scripts/WorldData.cs" id="2_nwvip"]
+[ext_resource type="Script" uid="uid://dl3n6xrtncl4x" path="res://Assets/Scripts/Game.cs" id="1_b2yd6"]
+[ext_resource type="Script" uid="uid://cdvse7vlat2ui" path="res://Assets/Scripts/WorldData.cs" id="2_nwvip"]
 [ext_resource type="PackedScene" uid="uid://d3ts66q75vgki" path="res://Register.tscn" id="2_y4rtl"]
 [ext_resource type="PackedScene" uid="uid://b56rds5e6x5ms" path="res://Player.tscn" id="3_q7ml1"]
 
@@ -16,13 +16,12 @@ sky = SubResource("Sky_xkk2x")
 
 [sub_resource type="CameraAttributesPractical" id="CameraAttributesPractical_3vrhg"]
 
-[node name="Game" type="Node" node_paths=PackedStringArray("map", "worldData")]
+[node name="Game" type="Node" node_paths=PackedStringArray("worldData")]
 script = ExtResource("1_b2yd6")
-map = NodePath("World")
 worldData = NodePath("World")
 
 [node name="Player" parent="." instance=ExtResource("3_q7ml1")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 7.1, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 7, 0)
 
 [node name="World" type="Node" parent="."]
 script = ExtResource("2_nwvip")

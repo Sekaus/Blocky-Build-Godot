@@ -1,6 +1,6 @@
 [gd_scene load_steps=6 format=3 uid="uid://c38r48gqsov3s"]
 
-[ext_resource type="Script" uid="uid://1x1cyb4aybys" path="res://Scripts/SuperClasses/Door.cs" id="1_d7uxm"]
+[ext_resource type="Script" uid="uid://1x1cyb4aybys" path="res://Assets/Scripts/SuperClasses/Door.cs" id="1_d7uxm"]
 [ext_resource type="ArrayMesh" uid="uid://d102dv24s3jr3" path="res://Assets/Blocks/Models/DoorTypeA.obj" id="1_gudjw"]
 [ext_resource type="Texture2D" uid="uid://bhiyroyphseft" path="res://Assets/Blocks/Textures/OkeDoorTypeA.png" id="2_prcc3"]
 

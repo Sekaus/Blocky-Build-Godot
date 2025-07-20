@@ -24,7 +24,7 @@ project/assembly_name="Blocky Build"
 
 [editor_plugins]
 
-enabled=PackedStringArray("res://addons/anthonyec.camera_preview/plugin.cfg")
+enabled=PackedStringArray()
 
 [input]
 
